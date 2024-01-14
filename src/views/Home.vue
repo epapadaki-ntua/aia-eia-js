@@ -173,7 +173,7 @@ export default class Home extends Vue {
           '" class="' +
           title.className +
           '"><span class="field-name">' +
-          title.innerText +
+          title.innerHTML +
           "</span>" +
           questionRequiredHTML +
           "</label>" +
