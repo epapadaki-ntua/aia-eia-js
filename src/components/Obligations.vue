@@ -8,11 +8,11 @@
       </div>
       <div
         class="row"
-        v-for="requirement in $t('requirements.elements', locale)"
+        v-for="requirement in (<unknown>$t('requirements.elements', locale) as Array<any>)"
         :key="requirement.title"
       >
         <h3>{{ requirement.title }}</h3>
-        <list-item :text="requirement.elements[score[3] - 1].text" />
+        <ListItem :text="requirement.elements[score[3] - 1].text" />
       </div>
       <div class="row">
         <h3>{{ $t("otherRequirementsTitle", locale) }}</h3>
@@ -28,22 +28,14 @@
   </div>
 </template>
 
-<script lang="ts">
-import Vue from "vue";
-import i18n from "@/plugins/i18n";
-import Component from "vue-class-component";
+<script setup lang="ts">
+import { defineProps } from "vue";
 import ListItem from "@/components/ListItem.vue";
+import store from "@/store";
 
-@Component({
-  props: ["locale"],
-  computed: {
-    score: function() {
-      return this.$store.getters.calcScore;
-    }
-  },
-  components: {
-    ListItem
-  }
-})
-export default class Obligations extends Vue {}
+const { locale } = defineProps<{
+  locale: any;
+}>();
+
+const score = store.getters.calcScore;
 </script>

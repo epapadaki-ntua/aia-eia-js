@@ -6,12 +6,10 @@ import {
   IQuestion,
   QuestionSelectBase,
   SurveyModel,
-  IPanel,
-  LocalizableString
 } from "survey-vue";
 import isEmpty from "lodash.isempty";
 
-Vue.use(Vuex);
+
 
 const vuexLocal = new VuexPersistence({
   storage: window.localStorage,
@@ -78,7 +76,7 @@ export function getValue(val: any) {
   return val;
 }
 
-function getScoreTypeHelper(name: String): Number {
+function getScoreTypeHelper(name: String): number {
   // 1 - Not Scored, 2 - Raw Score, 3 - Mitigation Score
   if (name) {
     if (name.endsWith("-RS")) {
@@ -93,7 +91,7 @@ function getScoreTypeHelper(name: String): Number {
   return 0;
 }
 
-function getScoreType(question: IQuestion): Number {
+function getScoreType(question: IQuestion): number {
   var result = getScoreTypeHelper(question.name);
 
   if (result > 0) {

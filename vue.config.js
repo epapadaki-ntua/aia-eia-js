@@ -6,8 +6,26 @@ module.exports = {
   publicPath: process.env.NODE_ENV === "production" ? "/aia-eia-js/" : "/",
 
   configureWebpack: {
-    devtool: "source-map"
+    devtool: "source-map",
   },
 
-  transpileDependencies: ["vuex-persist", "vue-i18n"]
+  transpileDependencies: ["vuex-persist", "vue-i18n"],
+
+  chainWebpack: (config) => {
+    config.resolve.alias.set("vue", "@vue/compat");
+
+    config.module
+      .rule("vue")
+      .use("vue-loader")
+      .tap((options) => {
+        return {
+          ...options,
+          compilerOptions: {
+            compatConfig: {
+              MODE: 2,
+            },
+          },
+        };
+      });
+  },
 };

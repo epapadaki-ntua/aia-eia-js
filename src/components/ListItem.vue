@@ -22,42 +22,42 @@
     <div v-for="(section, index) in sections" :key="index">
       <p>{{ section.title }}</p>
       <div v-if="section.list.length > 1">
-        <ul v-for="(item, index) in section.list" :key="index">
-          <li>{{ item }}</li>
+        <ul>
+          <li v-for="(item, index) in section.list" :key="index">{{ item }}</li>
         </ul>
       </div>
     </div>
   </div>
 </template>
-<script lang="ts">
-import { Component, Prop, Vue } from "vue-property-decorator";
+
+<script setup lang="ts">
+import { ref, onMounted, Prop } from "vue";
 
 interface Section {
-  title: String;
+  title: string;
   list: string[];
 }
 
-@Component
-export default class ListItem extends Vue {
-  @Prop() text!: string;
-  private sections: Section[] = [];
-  mounted() {
-    if (this.text.indexOf("\n") < 0) {
-      this.sections.push({ title: this.text, list: [] });
-    } else {
-      for (let s of this.text.split("\n\n\n")) {
-        if (s.indexOf("\n\n") < 0) {
-          // only basic paragraphs, no list...
-          for (let p of s.split("\n")) {
-            this.sections.push({ title: p, list: [] });
-          }
-        } else {
-          let t = s.split("\n\n")[0];
-          let l = s.split("\n\n")[1].split("\n");
-          this.sections.push({ title: t, list: l });
+const text = defineProps<string>();
+
+const sections = ref<Section[]>([]);
+
+onMounted(() => {
+  if (text.valueOf().indexOf("\n") < 0) {
+    sections.value.push({ title: text.valueOf(), list: [] });
+  } else {
+    for (let s of text.valueOf().split("\n\n\n")) {
+      if (s.indexOf("\n\n") < 0) {
+        // only basic paragraphs, no list...
+        for (let p of s.split("\n")) {
+          sections.value.push({ title: p, list: [] });
         }
+      } else {
+        let t = s.split("\n\n")[0];
+        let l = s.split("\n\n")[1].split("\n");
+        sections.value.push({ title: t, list: l });
       }
     }
   }
-}
+});
 </script>

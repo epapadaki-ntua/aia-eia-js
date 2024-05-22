@@ -1,13 +1,13 @@
 import Vuex from "vuex";
-import { createLocalVue } from "@vue/test-utils";
+// import { createLocalVue } from "@vue/test-utils";
 
-function localVueInstance() {
-  const localVue = createLocalVue();
+// function localVueInstance() {
+//   const localVue = createLocalVue();
 
-  localVue.use(Vuex);
+//   localVue.use(Vuex);
 
-  return localVue;
-}
+//   return localVue;
+// }
 
 describe("store.ts", () => {
   it("renders calcscore getter", () => {

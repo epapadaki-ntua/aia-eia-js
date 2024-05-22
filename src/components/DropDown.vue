@@ -1,12 +1,12 @@
 <template>
-  <div id="dropDown" v-if="displayDropDown == true">
+  <div v-if="displayDropDown">
     <label> {{ $t("navigateSectionLabel") }} </label>
 
     <div>
       <b-col md="4">
         <!-- Calls redirectToPage function whenever user changes index -->
-        <select class="dropDownList" @change="redirectToPage()">
-          <option select>{{ $t("selectSection") }} </option>
+        <select class="dropDownList" @change="redirectToPage">
+          <option selected disabled>{{ $t("selectSection") }}</option>
           <option v-for="page in totalPages" :key="page.num">
             {{ "Section " + page.num + ": " + page.title }}
           </option>
@@ -16,91 +16,80 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Component, Prop, Vue } from "vue-property-decorator";
+<script setup lang="ts">
+import { ref } from "vue";
 import { Model } from "survey-vue";
-import i18n from "@/plugins/i18n";
+import { useI18n } from 'vue-i18n';
+const {t} = useI18n({})
 
-@Component
-export default class DropDown extends Vue {
-  @Prop() public survey?: Model;
-  @Prop() displayDropDown?: boolean;
+const displayDropDown = defineProps<boolean>();
+const survey = defineProps<Model>();
 
-  redirectToPage() {
-    //colon value used to determine weather to set new value as single digit number or double digit
-    var colon = ":";
-    var e = document.getElementsByClassName(
-      "dropDownList"
-    )[0] as HTMLSelectElement;
-    //Used to get selected item
-    var pageSection = e.options[e.selectedIndex].text;
-    var newVal: any;
-    //Using regex (regular expressions)
-    newVal = pageSection.replace(/\D/g, "");
-    //To redirect to correct page
-    if (this.survey != null) {
-      this.survey.currentPageNo = newVal - 1;
-    }
+const totalPages = ref([
+  {
+    title: t("resultSectionPD"),
+    num: 1,
+  },
+  {
+    title: t("sectionBusinessDriverImpact"),
+    num: 2,
+  },
+  {
+    title: t("riskProfile"),
+    num: 3,
+  },
+  {
+    title: t("projectAuthority"),
+    num: 4,
+  },
+  {
+    title: t("aboutTheSystem"),
+    num: 5,
+  },
+  {
+    title: t("aboutTheAlgorithm"),
+    num: 6,
+  },
+  {
+    title: t("aboutDecision"),
+    num: 7,
+  },
+  {
+    title: t("impactAssessment"),
+    num: 8,
+  },
+  {
+    title: t("aboutTheData"),
+    num: 9,
+  },
+  {
+    title: t("consultations"),
+    num: 10,
+  },
+
+  {
+    title: t("deRiskingAndMitigationMeasuresDQ"),
+    num: 11,
+  },
+
+  {
+    title: t("deRiskingAndMitigationMeasuresPF"),
+    num: 12,
+  },
+  {
+    title: t("deRiskingAndMitigationMeasuresP"),
+    num: 13,
+  },
+]);
+
+const redirectToPage = () => {
+  const e = document.getElementsByClassName(
+    "dropDownList"
+  )[0] as HTMLSelectElement;
+  const pageSection = e.options[e.selectedIndex].text;
+  const newVal = pageSection.replace(/\D/g, "");
+  if (survey.value != null) {
+    survey.value.currentPageNo = Number(newVal) - 1;
   }
-  data() {
-    return {
-      totalPages: [
-        {
-          title: this.$t("resultSectionPD"),
-          num: 1
-        },
-        {
-          title: this.$t("sectionBusinessDriverImpact"),
-          num: 2
-        },
-        {
-          title: this.$t("riskProfile"),
-          num: 3
-        },
-        {
-          title: this.$t("projectAuthority"),
-          num: 4
-        },
-        {
-          title: this.$t("aboutTheSystem"),
-          num: 5
-        },
-        {
-          title: this.$t("aboutTheAlgorithm"),
-          num: 6
-        },
-        {
-          title: this.$t("aboutDecision"),
-          num: 7
-        },
-        {
-          title: this.$t("impactAssessment"),
-          num: 8
-        },
-        {
-          title: this.$t("aboutTheData"),
-          num: 9
-        },
-        {
-          title: this.$t("consultations"),
-          num: 10
-        },
-
-        {
-          title: this.$t("deRiskingAndMitigationMeasuresDQ"),
-          num: 11
-        },
-
-        {
-          title: this.$t("deRiskingAndMitigationMeasuresPF"),
-          num: 12
-        },
-        {
-          title: this.$t("deRiskingAndMitigationMeasuresP"),
-          num: 13
-        }
-      ]
-    };
-  }
-}
+};
 </script>

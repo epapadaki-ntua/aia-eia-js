@@ -1,63 +1,57 @@
 <template>
   <div>
     <div class="col-md-12">
-      <strong v-if="locale == undefined">{{ num + ". " + data.title }}</strong>
-      <strong v-if="locale !== undefined">{{
-        num + ". " + data.titleData[locale]
-      }}</strong>
+      <strong v-if="locale === undefined">{{ num + '. ' + data.title }}</strong>
+      <strong v-if="locale !== undefined">{{ num + '. ' + data.titleData[locale] }}</strong>
       <br />
-      <div v-if="locale == undefined">
+      <div v-if="locale === undefined">
         <div>
-          <strong v-if="$root.$i18n.locale == 'en'" class="label label-default"
-            >{{ $t("englishContent") }} :
-          </strong>
-          <strong v-if="$root.$i18n.locale == 'fr'" class="label label-default"
-            >{{ $t("frenchContent") }} :
-          </strong>
+          <strong v-if="$i18n.locale === 'en'" class="label label-default">{{ $t('englishContent') }} :</strong>
+          <strong v-if="$i18n.locale === 'fr'" class="label label-default">{{ $t('frenchContent') }} :</strong>
           <p>
             <span style="white-space: pre-wrap">{{ data.displayValue }}</span>
           </p>
         </div>
         <div>
-          <strong v-if="$root.$i18n.locale == 'en'" class="label label-default"
-            >{{ $t("frenchContent") }} :
-          </strong>
-          <strong v-if="$root.$i18n.locale == 'fr'" class="label label-default"
-            >{{ $t("englishContent") }} :
-          </strong>
+          <strong v-if="$i18n.locale === 'en'" class="label label-default">{{ $t('frenchContent') }} :</strong>
+          <strong v-if="$i18n.locale === 'fr'" class="label label-default">{{ $t('englishContent') }} :</strong>
           <div>
-            <textarea style="width: 100%"
-              :value="this.$store.getters.getTranslationsOnResult[this.data.name]"
-              @blur="saveTranslation($event.target.value)"
-            ></textarea>
+            <textarea style="width: 100%" v-model="translation" @blur="saveTranslation"></textarea>
           </div>
         </div>
       </div>
-      <div v-if="locale !== undefined">
-        <div v-if="locale == $root.$i18n.locale" class="valueResultPDF">
+      <div v-else>
+        <div v-if="locale === $i18n.locale" class="valueResultPDF">
           <span style="white-space: pre-wrap">{{ data.displayValue }}</span>
         </div>
-        <div v-if="locale != $root.$i18n.locale" class="valueResultPDF">
-          <span style="white-space: pre-wrap">{{ this.$store.getters.getTranslationsOnResult[this.data.name] }}</span>
+        <div v-else class="valueResultPDF">
+          <span style="white-space: pre-wrap">{{ translations[data.name] }}</span>
         </div>
       </div>
     </div>
   </div>
 </template>
 
-<script lang="ts">
-import { Component, Vue, Prop } from "vue-property-decorator";
+<script setup lang="ts">
+import { ref, computed } from 'vue';
+import store from '@/store';
 
-@Component
-export default class TextResult extends Vue {
-  @Prop() data: any;
-  @Prop() locale: any;
-  @Prop() num!: number;
-  saveTranslation(displayValueAlt: string) {
-    this.$store.dispatch("saveTranslationsOnResult", {
-      key: this.data.name,
-      value: displayValueAlt
-    });
-  }
-}
+const translation = ref('');
+
+const saveTranslation = () => {
+  store.dispatch('saveTranslationsOnResult', {
+    key: props.data.name,
+    value: translation.value
+  });
+};
+
+const translations = computed(() => store.getters.getTranslationsOnResult);
+
+const props = defineProps<{
+  data: any;
+  locale: any;
+  num: number;
+}>();
+
+
 </script>

@@ -1,15 +1,13 @@
 <template>
   <div>
     <div class="col-md-10">
-      <strong v-if="locale == undefined">{{ num + ". " + data.title }}</strong>
-      <strong v-if="locale !== undefined">{{
-        num + ". " + data.titleData[locale]
-      }}</strong>
+      <strong v-if="locale === undefined">{{ num + '. ' + data.title }}</strong>
+      <strong v-if="locale !== undefined">{{ num + '. ' + data.titleData[locale] }}</strong>
       <br />
-      <div v-if="locale == undefined" class="valueResultPDF">
+      <div v-if="locale === undefined" class="valueResultPDF">
         {{ data.displayValue }}
       </div>
-      <div v-if="locale !== undefined" class="valueResultPDF">
+      <div v-else class="valueResultPDF">
         {{ data.selectedItem[locale] }}
       </div>
     </div>
@@ -19,18 +17,13 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Component, Vue, Prop } from "vue-property-decorator";
-import Modifier from "@/components/Modifier.vue";
+<script setup lang="ts">
+import { defineProps } from 'vue';
+import Modifier from '@/components/Modifier.vue';
 
-@Component({
-  components: {
-    Modifier
-  }
-})
-export default class ValueResult extends Vue {
-  @Prop() data: any;
-  @Prop() locale: any;
-  @Prop() num!: number;
-}
+const props = defineProps<{
+  data: any;
+  locale: any;
+  num: number;
+}>();
 </script>

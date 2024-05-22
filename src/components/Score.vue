@@ -1,14 +1,3 @@
-<style>
-.scoreClass {
-  font-size: 0.8em !important;
-  display: flex !important;
-}
-.sticky {
-  position: -webkit-sticky; /* Safari */
-  position: sticky;
-  bottom: 0;
-}
-</style>
 <template>
   <b-container class="sticky">
     <b-row :class="alertclass" :no-gutters="true" v-if="!isMobile()">
@@ -26,43 +15,41 @@
   </b-container>
 </template>
 
-<script lang="ts">
-import { Component, Vue } from "vue-property-decorator";
-import { Getter } from "vuex";
+<script setup lang="ts">
+import { computed } from 'vue';
+import { useStore } from 'vuex';
 
-// define a mixin object
-var myMixin = {
-  methods: {
-    isMobile: function() {
-      if (
-        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-          navigator.userAgent
-        )
-      ) {
-        return true;
-      } else {
-        return false;
-      }
-    }
-  }
+const store = useStore();
+
+const isMobile = () => {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 };
 
-@Component({
-  mixins: [myMixin],
-  props: ["locale"],
-  computed: {
-    score: function() {
-      return this.$store.getters.calcScore;
-    },
-    alertclass: function() {
-      const score = this.$store.getters.calcScore[3];
-      if (score === undefined || score === 1)
-        return "scoreClass alert alert-success";
-      if (score === 2) return "scoreClass alert alert-info";
-      if (score === 3) return "scoreClass alert alert-warning";
-      if (score === 4) return "scoreClass alert alert-danger";
-    }
-  }
-})
-export default class Score extends Vue {}
+const score = computed(() => {
+  return store.getters.calcScore;
+});
+
+const alertclass = computed(() => {
+  const scoreValue = score.value[3];
+  if (scoreValue === undefined || scoreValue === 1) return "scoreClass alert alert-success";
+  if (scoreValue === 2) return "scoreClass alert alert-info";
+  if (scoreValue === 3) return "scoreClass alert alert-warning";
+  if (scoreValue === 4) return "scoreClass alert alert-danger";
+});
+
+const locale = defineProps<{
+  locale: any;
+}>();
 </script>
+
+<style>
+.scoreClass {
+  font-size: 0.8em !important;
+  display: flex !important;
+}
+.sticky {
+  position: -webkit-sticky; /* Safari */
+  position: sticky;
+  bottom: 0;
+}
+</style>

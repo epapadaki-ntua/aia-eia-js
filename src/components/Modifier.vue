@@ -3,38 +3,38 @@
     <div v-if="locale === undefined">
       <strong>{{ $t("modifier") }}:</strong> {{ str }}
     </div>
-    <div v-if="locale !== undefined" class="modifierPDF">
+    <div v-else class="modifierPDF">
       [ {{ $t("modifier", locale) }}: {{ str }} ]
     </div>
   </div>
 </template>
 
-<script lang="ts">
-import { Component, Vue, Prop } from "vue-property-decorator";
+<script setup lang="ts">
+import { defineProps } from 'vue';
 
-@Component
-export default class Modifier extends Vue {
-  @Prop() data: any;
-  @Prop() locale: any;
-  private str: String = this.getModifiedData();
+const { data, locale } = defineProps<{
+  data: any;
+  locale: any;
+}>();
 
-  getModifiedData(): string {
-    //Added similar logic than parseEmbeddedValue from $store
-    if (typeof this.data === "string") {
-      const lastHyphenIdx = this.data.lastIndexOf("-");
-      if (lastHyphenIdx !== -1) {
-        // Suffix after last "-" could be a number.
-        const possibleValue = this.data.substr(lastHyphenIdx + 1);
-        const value = Number(possibleValue);
-        if (typeof value === "number") {
-          return "+" + value.toString();
-        }
+let str: string = getModifiedData();
+
+function getModifiedData(): string {
+  // Added similar logic than parseEmbeddedValue from $store
+  if (typeof data === "string") {
+    const lastHyphenIdx = data.lastIndexOf("-");
+    if (lastHyphenIdx !== -1) {
+      // Suffix after last "-" could be a number.
+      const possibleValue = data.substring(lastHyphenIdx + 1);
+      const value = Number(possibleValue);
+      if (typeof value === "number") {
+        return "+" + value.toString();
       }
-      return "0";
     }
-    if (this.data == 0) return "0";
-    if (this.data < 0) return this.data.toString();
-    return "+" + this.data;
+    return "0";
   }
+  if (data == 0) return "0";
+  if (data < 0) return data.toString();
+  return "+" + data;
 }
 </script>

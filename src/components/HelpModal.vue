@@ -1,12 +1,25 @@
 <template>
-  <div id="helpModal" class="modalS" role="dialog">
-    <div class="modalS-content">
-      <span class="closeS">&times;</span>
-      <div id="helpText"></div>
+  <div class="modalS" v-show="showModal" @click.self="closeModal">
+    <div class="modalS-content" @click.stop>
+      <span class="closeS" @click="closeModal">&times;</span>
+      <div id="helpText">{{ helpText }}</div>
     </div>
   </div>
 </template>
-<style>
+
+<script setup>
+import { ref } from 'vue';
+
+const showModal = ref(false);
+const helpText = ref(''); // Initialize helpText
+
+const closeModal = () => {
+  showModal.value = false;
+};
+
+</script>
+
+<style scoped>
 /* The Modal (background) */
 .modalS {
   display: none; /* Hidden by default */

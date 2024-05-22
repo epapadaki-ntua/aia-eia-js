@@ -80,7 +80,7 @@
           :fields="mitigationFields"
         ></b-table>
 
-        <Obligations />
+        <Obligations locale="en" />
         <div class="row">
           <h2 id="qA">{{ "Section 3: " + $t("resultSectionQA") }}</h2>
         </div>
@@ -95,7 +95,7 @@
           v-for="(result, index) in myResults[0]"
           :key="result.name"
         >
-          <Result :data="result" :num="index + 1"></Result>
+          <Result locale="en" :data="result" :num="index + 1"></Result>
         </div>
 
         <div class="row">
@@ -106,7 +106,7 @@
           v-for="(result, index) in myResults[1]"
           :key="result.name"
         >
-          <Result :data="result" :num="index + 1"></Result>
+          <Result locale="en" :data="result" :num="index + 1"></Result>
         </div>
 
         <div class="row">
@@ -119,7 +119,7 @@
           v-for="(result, index) in myResults[2]"
           :key="result.name"
         >
-          <Result :data="result" :num="index + 1"></Result>
+          <Result locale="en" :data="result" :num="index + 1"></Result>
         </div>
       </div>
     </div>
@@ -130,7 +130,7 @@
         type="button"
         value="Export Results"
         class="btn btn-default"
-        onclick="exportResults('en')"
+        @click="exportResults('en')"
       >
         {{ $t("exportEnglishResults") }}
       </button>
@@ -139,7 +139,7 @@
         type="button"
         value="Export Results"
         class="btn btn-default"
-        onclick="exportResults('fr')"
+        @click="exportResults('fr')"
       >
         {{ $t("exportFrenchResults") }}
       </button>
@@ -214,12 +214,11 @@
           v-for="(result, index) in myResults[0]"
           :key="result.name"
         >
-          <Result :data="result" locale="fr" :num="index + 1"></Result>
+          <Result :data="result" locale="en" :num="index + 1"></Result>
         </div>
 
         <h2>
-          {{ "Section 1: " + $t("riskLevel", (locale = "fr"))
-          }}{{ ": " + score[3] }}
+          {{ "Section 1: " + $t("riskLevel", "fr") }}{{ ": " + score[3] }}
         </h2>
 
         <div class="pointFormatPDF">
@@ -247,7 +246,7 @@
             v-for="(result, index) in myResults[1]"
             :key="result.name"
           >
-            <Result :data="result" locale="fr" :num="index + 1"></Result>
+            <Result :data="result" locale="en" :num="index + 1"></Result>
           </div>
 
           <div class="row">
@@ -260,7 +259,7 @@
             v-for="(result, index) in myResults[2]"
             :key="result.name"
           >
-            <Result :data="result" locale="fr" :num="index + 1"></Result>
+            <Result :data="result" locale="en" :num="index + 1"></Result>
           </div>
         </div>
       </div>
@@ -268,213 +267,197 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Component, Vue, Prop } from "vue-property-decorator";
-
-import { Model } from "survey-vue";
-
-import showdown from "showdown";
-
-import AssessmentTool from "@/components/AssessmentTool.vue"; // @ is an alias to /src
-import Score from "@/components/Score.vue";
+<script setup lang="ts">
+import { useI18n } from "vue-i18n";
 import ActionButtonBar from "@/components/ActionButtonBar.vue";
 import Result from "@/components/Result.vue";
 import Obligations from "@/components/Obligations.vue";
-import SurveyFile from "@/interfaces/SurveyFile";
-import i18n from "@/plugins/i18n";
-import surveyJSON from "@/survey-enfr.json";
+import store from "@/store";
 import RiskArea from "@/interfaces/RiskArea";
+import surveyJSON from "@/survey-enfr.json";
+import { Model } from "survey-vue";
+import { onMounted } from "vue";
+import showdown from "showdown";
+import SurveyFile from "@/interfaces/SurveyFile";
+import router from "@/router";
+import { computed } from "vue";
 
-@Component({
-  components: {
-    ActionButtonBar,
-    Result,
-    Score,
-    Obligations
-  },
-  computed: {
-    score: function() {
-      return this.$store.getters.calcScore;
+const { t } = useI18n();
+const Survey = new Model(surveyJSON);
+let myResults = store.getters.resultDataSections;
+
+const score = computed(() => {
+  return store.getters.calcScore;
+});
+
+const riskAreaFields = [
+  { key: "risk_area", label: t("riskArea").toString() },
+  { key: "no_of_questions", label: t("noOfQuestions").toString() },
+  { key: "project_score", label: t("projectScore").toString() },
+  { key: "maximum_score", label: t("maximumScore").toString() },
+];
+
+const mitigationFields = [
+  { key: "risk_area", label: t("mitigationArea").toString() },
+  { key: "no_of_questions", label: t("noOfQuestions").toString() },
+  { key: "project_score", label: t("projectScore").toString() },
+  { key: "maximum_score", label: t("maximumScore").toString() },
+];
+
+onMounted(() => {
+  Survey.onComplete.add((result) => {
+    store.commit("updateResult", result);
+  });
+
+  Survey.onComplete.add((results) => {
+    router.push("Results");
+  });
+
+  Survey.onValueChanged.add((result) => {
+    store.commit("updateResult", result);
+  });
+
+  const converter = new showdown.Converter();
+
+  Survey.onTextMarkdown.add(function (survey, options) {
+    //convert the markdown text to html
+    var str = converter.makeHtml(options.text);
+    //remove root paragraphs <p></p>
+    str = str.substring(3);
+    str = str.substring(0, str.length - 4);
+    //set html
+    options.html = str;
+  });
+
+  // Set locale
+  Survey.locale = "en";
+
+  // Remove the default required '*'.
+  Survey.requiredText = "";
+
+  // Fix all the question labels as they're using <H5> instead of <label>
+  // as SurveyJS has open issue as per: https://github.com/surveyjs/surveyjs/issues/928
+  Survey.onAfterRenderQuestion.add(function (sender, options) {
+    let title = options.htmlElement.getElementsByTagName("H5")[0];
+    if (title) {
+      var questionRequiredHTML = "";
+
+      if (options.question.isRequired) {
+        // Should do localization mechanism
+        var requiredText = sender.locale == "fr" ? "obligatoire" : "required";
+        questionRequiredHTML =
+          ' <strong class="required">(' + requiredText + ")</strong>";
+      }
+
+      title.outerHTML =
+        '<label for="' +
+        options.question.inputId +
+        '" class="' +
+        title.className +
+        '"><span class="field-name">' +
+        title.innerHTML +
+        "</span>" +
+        questionRequiredHTML +
+        "</label>";
     }
+  });
+
+  //if survey is in progress reload from store
+  if (store.getters.inProgress) {
+    fileLoaded({
+      version: store.state.version,
+      currentPage: store.state.currentPageNo,
+      data: store.state.toolData,
+      translationsOnResult: store.state.translationsOnResult,
+    } as SurveyFile);
   }
-})
-export default class Results extends Vue {
-  myResults = this.$store.getters.resultDataSections;
+});
 
-  riskAreaFields = [
-    { key: "risk_area", label: this.$t("riskArea").toString() },
-    { key: "no_of_questions", label: this.$t("noOfQuestions").toString() },
-    { key: "project_score", label: this.$t("projectScore").toString() },
-    { key: "maximum_score", label: this.$t("maximumScore").toString() }
-  ];
+const exportResults = (locale: string) => {
+  // export results logic here
+};
 
-  mitigationFields = [
-    { key: "risk_area", label: this.$t("mitigationArea").toString() },
-    { key: "no_of_questions", label: this.$t("noOfQuestions").toString() },
-    { key: "project_score", label: this.$t("projectScore").toString() },
-    { key: "maximum_score", label: this.$t("maximumScore").toString() }
-  ];
+const startAgain = () => {
+  Survey.clear(true, true);
+  window.localStorage.clear();
+  store.commit("resetSurvey");
+  router.push({ path: "/" });
+};
 
-  riskAreaItems() {
-    let items: RiskArea[] = [];
-    let totalNoQuestions = 0;
-    let totalProjectScore = 0;
-    let totalMaxScore = 0;
-    if (this.myResults[1]?.length > 0) {
-      this.myResults[1].forEach((myResult: any) => {
-        if (myResult.questionHeader !== undefined) {
-          let riskAreaTitle = myResult.questionHeader;
-          let riskAreaName = myResult.name.replace(/\d/g, "");
-          let sectionScore = this.$store.getters.getScoreBySection(
-            riskAreaName
-          );
-          items.push({
-            risk_area: riskAreaTitle[this.$i18n.locale],
-            no_of_questions: sectionScore[0],
-            project_score: sectionScore[1],
-            maximum_score: sectionScore[2]
-          });
-          totalNoQuestions += sectionScore[0];
-          totalProjectScore += sectionScore[1];
-          totalMaxScore += sectionScore[2];
-        }
-      });
-    }
-    items.push({
-      risk_area: this.$t("rawRiskScore")
-        .toString()
-        .toUpperCase(),
-      no_of_questions: totalNoQuestions,
-      project_score: totalProjectScore,
-      maximum_score: totalMaxScore
-    });
-    return items;
-  }
+const fileLoaded = (event: any) => {
+  Survey.version = event.version;
+  Survey.data = event.data;
+  Survey.translationsOnResult = event.translationsOnResult;
+  Survey.currentPageNo = event.currentPage;
+  Survey.start();
+  store.commit("updateResult", Survey);
 
-  mitigationItems() {
-    let items: RiskArea[] = [];
-    let totalNoQuestions = 0;
-    let totalProjectScore = 0;
-    let totalMaxScore = 0;
-    if (this.myResults[2]?.length > 0) {
-      this.myResults[2].forEach((myResult: any) => {
-        if (myResult.questionHeader !== undefined) {
-          let riskAreaTitle = myResult.questionHeader;
-          let riskAreaName = myResult.name.replace(/\d/, "");
-          let sectionScore = this.$store.getters.getScoreBySection(
-            riskAreaName
-          );
-          items.push({
-            risk_area: riskAreaTitle[this.$i18n.locale]
-              ? riskAreaTitle[this.$i18n.locale]
-              : riskAreaTitle["en"],
-            no_of_questions: sectionScore[0],
-            project_score: sectionScore[1],
-            maximum_score: sectionScore[2]
-          });
-          totalNoQuestions += sectionScore[0];
-          totalProjectScore += sectionScore[1];
-          totalMaxScore += sectionScore[2];
-        }
-      });
-    }
-    items.push({
-      risk_area: this.$t("mitigationScore")
-        .toString()
-        .toUpperCase(),
-      no_of_questions: totalNoQuestions,
-      project_score: totalProjectScore,
-      maximum_score: totalMaxScore
-    });
-    return items;
-  }
+  myResults = store.getters.resultDataSections;
+};
 
-  Survey: Model = new Model(surveyJSON);
-
-  startAgain() {
-    this.Survey.clear(true, true);
-    window.localStorage.clear();
-    this.$store.commit("resetSurvey");
-    this.$router.push({ path: "/" });
-  }
-  fileLoaded($event: SurveyFile) {
-    this.Survey.version = $event.version;
-    this.Survey.data = $event.data;
-    this.Survey.translationsOnResult = $event.translationsOnResult;
-    this.Survey.currentPageNo = $event.currentPage;
-    this.Survey.start();
-    this.$store.commit("updateResult", this.Survey);
-
-    this.myResults = this.$store.getters.resultDataSections;
-  }
-
-  created() {
-    this.Survey.onComplete.add(result => {
-      this.$store.commit("updateResult", result);
-    });
-
-    this.Survey.onComplete.add(results => {
-      this.$router.push("Results");
-    });
-
-    this.Survey.onValueChanged.add(result => {
-      this.$store.commit("updateResult", result);
-    });
-
-    const converter = new showdown.Converter();
-
-    this.Survey.onTextMarkdown.add(function(survey, options) {
-      //convert the markdown text to html
-      var str = converter.makeHtml(options.text);
-      //remove root paragraphs <p></p>
-      str = str.substring(3);
-      str = str.substring(0, str.length - 4);
-      //set html
-      options.html = str;
-    });
-
-    // Set locale
-    this.Survey.locale = i18n.locale;
-
-    // Remove the default required '*'.
-    this.Survey.requiredText = "";
-
-    // Fix all the question labels as they're using <H5> instead of <label>
-    // as SurveyJS has open issue as per: https://github.com/surveyjs/surveyjs/issues/928
-    this.Survey.onAfterRenderQuestion.add(function(sender, options) {
-      let title = options.htmlElement.getElementsByTagName("H5")[0];
-      if (title) {
-        var questionRequiredHTML = "";
-
-        if (options.question.isRequired) {
-          // Should do localization mechanism
-          var requiredText = sender.locale == "fr" ? "obligatoire" : "required";
-          questionRequiredHTML =
-            ' <strong class="required">(' + requiredText + ")</strong>";
-        }
-
-        title.outerHTML =
-          '<label for="' +
-          options.question.inputId +
-          '" class="' +
-          title.className +
-          '"><span class="field-name">' +
-          title.innerHTML +
-          "</span>" +
-          questionRequiredHTML +
-          "</label>";
+const riskAreaItems = () => {
+  let items: RiskArea[] = [];
+  let totalNoQuestions = 0;
+  let totalProjectScore = 0;
+  let totalMaxScore = 0;
+  if (myResults[1]?.length > 0) {
+    myResults[1].forEach((myResult: any) => {
+      if (myResult.questionHeader !== undefined) {
+        let riskAreaTitle = myResult.questionHeader;
+        let riskAreaName = myResult.name.replace(/\d/g, "");
+        let sectionScore = store.getters.getScoreBySection(riskAreaName);
+        items.push({
+          risk_area: riskAreaTitle["en"],
+          no_of_questions: sectionScore[0],
+          project_score: sectionScore[1],
+          maximum_score: sectionScore[2],
+        });
+        totalNoQuestions += sectionScore[0];
+        totalProjectScore += sectionScore[1];
+        totalMaxScore += sectionScore[2];
       }
     });
-
-    //if survey is in progress reload from store
-    if (this.$store.getters.inProgress) {
-      this.fileLoaded({
-        version: this.$store.state.version,
-        currentPage: this.$store.state.currentPageNo,
-        data: this.$store.state.toolData,
-        translationsOnResult: this.$store.state.translationsOnResult
-      } as SurveyFile);
-    }
   }
-}
+  items.push({
+    risk_area: t("rawRiskScore").toString().toUpperCase(),
+    no_of_questions: totalNoQuestions,
+    project_score: totalProjectScore,
+    maximum_score: totalMaxScore,
+  });
+  return items;
+};
+
+const mitigationItems = () => {
+  let items: RiskArea[] = [];
+  let totalNoQuestions = 0;
+  let totalProjectScore = 0;
+  let totalMaxScore = 0;
+  if (myResults[2]?.length > 0) {
+    myResults[2].forEach((myResult: any) => {
+      if (myResult.questionHeader !== undefined) {
+        let riskAreaTitle = myResult.questionHeader;
+        let riskAreaName = myResult.name.replace(/\d/, "");
+        let sectionScore = store.getters.getScoreBySection(riskAreaName);
+        items.push({
+          risk_area: riskAreaTitle["en"]
+            ? riskAreaTitle["en"]
+            : riskAreaTitle["en"],
+          no_of_questions: sectionScore[0],
+          project_score: sectionScore[1],
+          maximum_score: sectionScore[2],
+        });
+        totalNoQuestions += sectionScore[0];
+        totalProjectScore += sectionScore[1];
+        totalMaxScore += sectionScore[2];
+      }
+    });
+  }
+  items.push({
+    risk_area: t("mitigationScore").toString().toUpperCase(),
+    no_of_questions: totalNoQuestions,
+    project_score: totalProjectScore,
+    maximum_score: totalMaxScore,
+  });
+  return items;
+};
 </script>

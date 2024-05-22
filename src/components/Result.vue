@@ -4,49 +4,35 @@
       <h3>{{ data.questionHeader[locale] }}</h3>
     </div>
     <div>
-      <div v-if="data.value == data.displayValue">
-        <TextResult :data="data" :locale="locale" :num="num" />
-      </div>
-      <div v-else-if="isMultiChoiceValueResult(data)">
-        <MultiChoiceValueResult :data="data" :locale="locale" :num="num" />
-      </div>
-      <div v-else-if="Array.isArray(data.value)">
-        <MultiChoiceResult :data="data" :locale="locale" :num="num" />
-      </div>
-      <div v-else>
-        <ValueResult :data="data" :locale="locale" :num="num" />
-      </div>
+      <component :is="resolveComponentType(data)" :data="data" :locale="locale" :num="num" />
     </div>
   </div>
 </template>
 
-<script lang="ts">
-import { Component, Vue, Prop } from "vue-property-decorator";
-import TextResult from "@/components/TextResult.vue";
-import ValueResult from "@/components/ValueResult.vue";
-import MultiChoiceResult from "@/components/MultiChoiceResult.vue";
-import MultiChoiceValueResult from "@/components/MultiChoiceValueResult.vue";
-import { getValue } from "@/store";
+<script setup lang="ts">
+import { defineProps, resolveComponent } from 'vue';
+import { getValue } from '@/store';
 
-@Component({
-  components: {
-    TextResult,
-    ValueResult,
-    MultiChoiceResult,
-    MultiChoiceValueResult
-  }
-})
-export default class Result extends Vue {
-  @Prop() data: any;
-  @Prop() locale: any;
-  @Prop() num!: number;
-  isMultiChoiceValueResult(data: any): boolean {
-    if (!Array.isArray(data.value)) return false;
+const { data, locale, num } = defineProps<{
+  data: any;
+  locale: any;
+  num: number;
+}>();
 
-    //return true if one of the value has a score
-    return data.value.reduce((accumulator: boolean, currentValue: any) => {
-      return getValue(currentValue) > 0 || accumulator;
-    }, false);
+const resolveComponentType = (data: any) => {
+  if (data.value === data.displayValue) {
+    return 'TextResult';
+  } else if (isMultiChoiceValueResult(data)) {
+    return 'MultiChoiceValueResult';
+  } else if (Array.isArray(data.value)) {
+    return 'MultiChoiceResult';
+  } else {
+    return 'ValueResult';
   }
-}
+};
+
+const isMultiChoiceValueResult = (data: any): boolean => {
+  if (!Array.isArray(data.value)) return false;
+  return data.value.some((value: any) => getValue(value) > 0);
+};
 </script>
